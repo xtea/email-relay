@@ -1,0 +1,3 @@
+# Copy to .dev.vars for local `wrangler dev`. In production use:
+#   wrangler secret put INBOX_TOKEN
+INBOX_TOKEN=replace-with-random-32-byte-hex

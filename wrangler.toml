@@ -1,0 +1,32 @@
+# email-relay — Cloudflare Worker that receives verification emails on a
+# domain you own and serves them over a bearer-token-protected HTTPS API.
+#
+# Before deploying (wrangler is a local devDependency — invoke via `npx`):
+#   0. npm install
+#   1. npx wrangler login
+#      (or: export CLOUDFLARE_API_TOKEN=... if OAuth can't reach you)
+#   2. npx wrangler kv namespace create INBOX
+#      (copy the returned id into the [[kv_namespaces]] block below)
+#   3. npx wrangler secret put INBOX_TOKEN
+#      (paste a random 32-byte hex string; used as Bearer token by callers)
+#   4. npx wrangler deploy
+#   5. In the Cloudflare dashboard -> Email Routing -> add a catch-all rule
+#      for your domain that routes to this Worker.
+
+name = "email-relay"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+[[kv_namespaces]]
+binding = "INBOX"
+# Replace with the id returned by `npx wrangler kv namespace create INBOX`.
+id = "replace-me-with-your-kv-namespace-id"
+
+# Optional: serve the fetch API on a custom domain instead of the default
+# <worker>.<subdomain>.workers.dev URL. Uncomment, set to a zone you own
+# in this Cloudflare account, then redeploy.
+#
+# [[routes]]
+# pattern = "email-relay.example.com"
+# zone_name = "example.com"
+# custom_domain = true
