@@ -3,19 +3,23 @@ import worker from '../src/index';
 import type { Env } from '../src/types';
 
 function mockEnv(token = 'test-token'): Env {
-  const store = new Map<string, string>();
+  const store = new Map<string, { value: string; metadata?: unknown }>();
   const kv = {
-    get: async (key: string) => store.get(key) ?? null,
-    put: async (key: string, value: string) => {
-      store.set(key, value);
+    get: async (key: string) => store.get(key)?.value ?? null,
+    put: async (
+      key: string,
+      value: string,
+      opts?: { metadata?: unknown },
+    ) => {
+      store.set(key, { value, metadata: opts?.metadata });
     },
     delete: async (key: string) => {
       store.delete(key);
     },
     list: async ({ prefix = '', cursor: _cursor }: { prefix?: string; cursor?: string } = {}) => {
-      const keys = [...store.keys()]
-        .filter((k) => k.startsWith(prefix))
-        .map((name) => ({ name }));
+      const keys = [...store.entries()]
+        .filter(([k]) => k.startsWith(prefix))
+        .map(([name, { metadata }]) => ({ name, metadata }));
       return { keys, list_complete: true, cursor: '' };
     },
     getWithMetadata: async () => ({ value: null, metadata: null }),
@@ -114,7 +118,7 @@ describe('accounts routes', () => {
     expect(await get.json()).toEqual({});
   });
 
-  it('GET /accounts returns a list of usernames', async () => {
+  it('GET /accounts returns usernames and emails (from KV metadata)', async () => {
     const env = mockEnv();
     for (const u of ['alice', 'bob', 'carol']) {
       await worker.fetch(
@@ -131,8 +135,13 @@ describe('accounts routes', () => {
       env,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { usernames: string[] };
+    const body = (await res.json()) as { usernames: string[]; emails: string[] };
     expect(body.usernames.sort()).toEqual(['alice', 'bob', 'carol']);
+    expect(body.emails.sort()).toEqual([
+      'alice@example.com',
+      'bob@example.com',
+      'carol@example.com',
+    ]);
   });
 
   it('inbox routes still work alongside accounts routes', async () => {
