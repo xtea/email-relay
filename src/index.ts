@@ -4,6 +4,7 @@ import type { Extractor, ExtractorResult } from './sources/base';
 import { extractGenericCode } from './sources/generic';
 import { redditExtractor } from './sources/reddit';
 import type { Env, InboxRecord } from './types';
+import { handleWarming } from './warming';
 
 const EXTRACTORS: Extractor[] = [redditExtractor];
 const INBOX_TTL_SECONDS = 3600; // 1 hour
@@ -68,6 +69,11 @@ export default {
     // Accounts: persistent credentials store (separate from transient inbox).
     if (url.pathname === '/accounts' || url.pathname.startsWith('/accounts/')) {
       return handleAccounts(req, env.INBOX, url.pathname);
+    }
+
+    // Warming pool coordination — triggers + run history.
+    if (url.pathname.startsWith('/warm/')) {
+      return handleWarming(req, env.INBOX, url.pathname);
     }
 
     const match = url.pathname.match(/^\/inbox\/([^/]+)$/);
