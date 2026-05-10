@@ -65,7 +65,7 @@ curl -H "Authorization: Bearer $INBOX_TOKEN" \
 
 ## HTTP API
 
-**Inbox** — transient (1h TTL):
+Transient inbox storage (1h TTL):
 
 | Method | Path | Notes |
 |---|---|---|
@@ -73,15 +73,6 @@ curl -H "Authorization: Bearer $INBOX_TOKEN" \
 | `GET`  | `/inbox/<email>?source=<name>` | auth required; returns the latest stored record for that source or `{}` |
 | `GET`  | `/inbox/<email>?source=any` | returns the most recently written record regardless of source |
 | `DELETE` | `/inbox/<email>?source=<name>` | auth required; clears the KV entry |
-
-**Accounts** — persistent (no TTL). Useful for storing registered account credentials off the machine that created them:
-
-| Method | Path | Notes |
-|---|---|---|
-| `PUT`    | `/accounts/<username>` | auth required; JSON body is stored as-is under `accounts:<username>` (lowercased key). Server stamps `username` and `stored_at` on the record. |
-| `GET`    | `/accounts/<username>` | auth required; returns the stored record or `{}` |
-| `GET`    | `/accounts` | auth required; returns `{ usernames: [...] }` — flat list of stored keys |
-| `DELETE` | `/accounts/<username>` | auth required |
 
 Successful inbox response:
 
@@ -96,21 +87,6 @@ Successful inbox response:
     "link": "https://www.reddit.com/verification/<token>",
     "code": "847293"
   }
-}
-```
-
-Successful accounts response (after `PUT ... {"email": "...", "password": "..."}` then `GET`):
-
-```json
-{
-  "username": "Alice123",
-  "email": "alice.smith@your-domain.com",
-  "password": "super-secret",
-  "session_file": "Alice123.json",
-  "user_agent": "Mozilla/5.0 ...",
-  "proxy_used": null,
-  "created_at": "2026-04-24T12:34:56+00:00",
-  "stored_at": 1714000000000
 }
 ```
 
@@ -139,9 +115,7 @@ Any email whose subject or body contains a standalone 6-digit sequence (matching
 
 - The HTTPS endpoint is protected only by the bearer token. Rotate the token (`npx wrangler secret put INBOX_TOKEN` + update consumers) if it ever leaks.
 - Inbox entries TTL to 1 hour; older mail is self-cleaned.
-- **`/accounts/*` entries never expire** — the Worker trusts the bearer token as your sole access control for persistent credentials. If that's not acceptable for your use case, run the accounts layer on a separate Worker with its own token.
 - No per-IP rate limiting in this version. Add one if exposing the token outside your own infra.
-- Credentials stored via `/accounts/*` are plaintext in KV. Acceptable for a single-operator bot bay; **not** acceptable as a shared vault. Encrypt client-side before `PUT` if that's a concern.
 
 ## License
 

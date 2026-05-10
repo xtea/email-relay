@@ -1,3 +1,5 @@
+import type { KVNamespace } from '@cloudflare/workers-types';
+
 export interface Env {
   INBOX: KVNamespace;
   INBOX_TOKEN: string;

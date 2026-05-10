@@ -1,15 +1,14 @@
-import { handleAccounts } from './accounts';
 import { parseEmailStream } from './parse';
 import type { Extractor, ExtractorResult } from './sources/base';
 import { extractGenericCode } from './sources/generic';
 import { redditExtractor } from './sources/reddit';
 import type { Env, InboxRecord } from './types';
-import { handleWarming } from './warming';
 
-// CORS headers used by the dashboard (Cloudflare Pages or local dev).
-// Bearer-token auth is fine with `*` because the token rides in an
-// `Authorization` header, not a cookie — credentials: 'include' is never
-// set, so the browser does NOT require an explicit origin echo here.
+// CORS headers used by browser-side callers (e.g. dashboards polling
+// /inbox during a manual verification flow). Bearer-token auth is fine
+// with `*` because the token rides in an Authorization header, not a
+// cookie — credentials: 'include' is never set, so the browser does NOT
+// require an explicit origin echo here.
 const CORS_HEADERS: Record<string, string> = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -94,16 +93,6 @@ async function handleFetch(req: Request, env: Env): Promise<Response> {
   const auth = req.headers.get('authorization') ?? '';
   if (auth !== `Bearer ${env.INBOX_TOKEN}`) {
     return json({ error: 'unauthorized' }, 401);
-  }
-
-  // Accounts: persistent credentials store (separate from transient inbox).
-  if (url.pathname === '/accounts' || url.pathname.startsWith('/accounts/')) {
-    return handleAccounts(req, env.INBOX, url.pathname);
-  }
-
-  // Warming pool coordination — triggers + run history.
-  if (url.pathname.startsWith('/warm/')) {
-    return handleWarming(req, env.INBOX, url.pathname);
   }
 
   const match = url.pathname.match(/^\/inbox\/([^/]+)$/);

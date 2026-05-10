@@ -1,21 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import worker from '../src/index';
-import type { Env } from '../src/types';
+import { mockEnv as mockFullEnv } from './helpers';
 
-function mockEnv(token = 'test-token'): Env {
-  const store = new Map<string, string>();
-  const kv = {
-    get: async (key: string) => store.get(key) ?? null,
-    put: async (key: string, value: string) => {
-      store.set(key, value);
-    },
-    delete: async (key: string) => {
-      store.delete(key);
-    },
-    list: async () => ({ keys: [...store.keys()].map((name) => ({ name })), list_complete: true, cursor: '' }),
-    getWithMetadata: async () => ({ value: null, metadata: null }),
-  } as unknown as KVNamespace;
-  return { INBOX: kv, INBOX_TOKEN: token };
+function mockEnv(token = 'test-token') {
+  return mockFullEnv({ token }).env;
 }
 
 describe('email-relay fetch handler', () => {
