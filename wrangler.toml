@@ -19,11 +19,11 @@
 name = "email-relay"
 main = "src/index.ts"
 compatibility_date = "2026-01-01"
+account_id = "0cab1ed6a693778ea71c754eab6789ab"
 
 [[kv_namespaces]]
 binding = "INBOX"
-# Replace with the id returned by `npx wrangler kv namespace create INBOX`.
-id = "replace-me-with-your-kv-namespace-id"
+id = "6355f0193e44489db08f0519e8fdd0ec"
 
 # Optional: serve the fetch API on a custom domain instead of the default
 # <worker>.<subdomain>.workers.dev URL. Uncomment, set to a zone you own
